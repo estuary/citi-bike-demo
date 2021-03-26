@@ -1,0 +1,154 @@
+$defs:
+  station:
+    type: object
+    properties:
+      station_id:
+        description: Identifier of a station.
+        type: string
+      name:
+        description: Public name of the station.
+        type: string
+      short_name:
+        description: Short name or other type of identifier.
+        type: string
+      lat:
+        description: The latitude of the station.
+        type: number
+        minimum: -90
+        maximum: 90
+      lon:
+        description: The longitude fo the station.
+        type: number
+        minimum: -180
+        maximum: 180
+      address:
+        description: Address where station is located.
+        type: string
+      cross_street:
+        description: Cross street or landmark where the station is located.
+        type: string
+      region_id:
+        description: Identifier of the region where the station is located.
+        type: string
+      post_code:
+        description: Postal code where station is located.
+        type: string
+      rental_methods:
+        description: Payment methods accepted at this station.
+        type: array
+        items:
+          type: string
+          enum:
+            - KEY
+            - CREDITCARD
+            - PAYPASS
+            - APPLEPAY
+            - ANDROIDPAY
+            - TRANSITCARD
+            - ACCOUNTNUMBER
+            - PHONE
+        minItems: 1
+      is_virtual_station:
+        description: Is this station a location with or without physical infrastructure? (added in v2.1-RC)
+        type: integer
+      station_area:
+        description: A multipolygon that describes the area of a virtual station (added in v2.1-RC).
+        $ref: https://geojson.org/schema/MultiPolygon.json
+      capacity:
+        description: Number of total docking points installed at this station, both available and unavailable.
+        type: number
+        minimum: 0
+      vehicle_capacity:
+        type: object
+        description: An object where each key is a vehicle_type_id and the value is a number presenting the total number of vehicles of this type that can park within the station_area (added in v2.1-RC).
+        properties:
+          type: {type: number}
+      is_valet_station:
+        description: Are valet services provided at this station? (added in v2.1-RC)
+        type: integer
+      rental_uris:
+        description: Contains rental uris for Android, iOS, and web in the android, ios, and web fields (added in v1.1).
+        type: object
+        properties:
+          android:
+            description: URI that can be passed to an Android app with an intent (added in v1.1).
+            type: string
+            format: uri
+          ios:
+            description: URI that can be used on iOS to launch the rental app for this station (added in v1.1).
+            type: string
+            format: uri
+          web:
+            description: URL that can be used by a web browser to show more information about renting a vehicle at this station (added in v1.1).
+            type: string
+            format: uri
+      vehicle_type_capacity:
+        description: An object where each key is a vehicle_type_id and the value is a number representing the total docking points installed at this station for each vehicle type (added in v2.1-RC).
+        type: object
+        additionalProperties:
+          type: number
+    required: [station_id, name, lat, lon ]
+
+  station_status:
+    type: object
+    description: The current status of a station and all the bikes that are currently there.
+    required: [station_id]
+    properties:
+      station_id:
+        description: Identifier of a station.
+        type: string
+      num_bikes_available:
+        description: Number of vehicles of any type physically available for rental at the station.
+        type: number
+        minimum: 0
+      vehicles_types_available:
+        description: Array of objects displaying the total number of each vehicle type at the station (added in v2.1-RC).
+        type: array
+        items:
+          type: object
+          properties:
+            vehicle_type_id:
+              description: The vehicle_type_id of vehicle at the station (added in v2.1-RC).
+              type: string
+            count:
+              description: A number representing the total amount of this vehicle type at the station (added in v2.1-RC).
+              type: number
+              minimum: 0
+      num_bikes_disabled:
+        description: Number of disabled vehicles of any type at the station.
+        type: number
+        minimum: 0
+      num_docks_available:
+        description: Number of functional docks physically at the station.
+        type: number
+        minimum: 0
+      num_docks_disabled:
+        description: Number of empty but disabled docks at the station.
+        type: number
+        minimum: 0
+      is_installed:
+        description: Is the station currently on the street?
+        type: integer
+      is_renting:
+        description: Is the station currently renting vehicles?
+        type: integer
+      is_returning:
+        description: Is the station accepting vehicle returns?
+        type: integer
+      last_reported:
+        description: The last time this station reported its status to the operator's backend in POSIX time.
+        type: number
+
+  station_statuses:
+    type: object
+    properties:
+      last_updated:
+        type: integer
+
+      data:
+        type: object
+        properties:
+          stations:
+            type: array
+            items: {$ref: '#/$defs/station_status'}
+          

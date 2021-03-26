@@ -1,0 +1,57 @@
+collections:
+  demo/citi-bike/station-information:
+    schema: schemas.yaml#/$defs/station
+    key: [/station_id]
+  
+  demo/citi-bike/station-status:
+    schema: schemas.yaml#/$defs/station_status
+    key: [/station_id]
+
+  demo/citi-bike/available-by-station:
+    projections: 
+      station_id: /status/station_id
+      name: /info/name
+      address: /info/address
+      num_bikes_available: /status/num_bikes_available
+      num_docks_available: /status/num_docks_available
+    
+    schema:
+      type: object
+      properties:
+        info: {$ref: schemas.yaml#/$defs/station}
+        status: {$ref: schemas.yaml#/$defs/station_status}
+      required: [info, status]
+    key: [/status/station_id]
+    derivation:
+      register: 
+        initial: {}
+        schema: 
+          type: object
+          properties:
+            info: {$ref: schemas.yaml#/$defs/station}
+            status: {$ref: schemas.yaml#/$defs/station_status}
+      
+      transform: 
+        fromStationInfo:
+          source:
+            name: demo/citi-bike/station-information
+          update: 
+            lambda: typescript
+        fromStationStatus:
+          source:
+            name: demo/citi-bike/station-status
+          publish: 
+            lambda: typescript
+          
+materializations:
+  - source:
+      name: demo/citi-bike/available-by-station
+    endpoint:
+      name: demoSqlite
+      config: 
+        table: available_by_station
+
+endpoints: 
+  demoSqlite:
+    sqlite:
+      path: demo-materialization.db
