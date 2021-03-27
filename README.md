@@ -6,8 +6,15 @@ The Flow documentation is available at (https://docs.estuary.dev/). The docs may
 
 ## What it does
 
-This demo takes "batch" data describing bike share stations and joins it with a realtime feed of station status information. The results are materialized into a database and kept up to date in realtime.
+This demo takes "batch" data describing bike share stations and joins it with a realtime feed of station status information to provide a continuously updated view of bike availability along with station location information. The results are materialized into a database and kept up to date in realtime.
 
 The batch station information is in `station_info.jsonl`. This file contains data like the name and location of each station. It is ingested into flow using `./scripts/add-station-info.sh`.
 
 The realtime status data is fetched from the GBFS feed at `https://gbfs.citibikenyc.com/gbfs/en/station_status.json` and forwarded into flow continuously using `./scripts/add-station-statuses.sh`, which runs until you stop it using `ctrl-c`.
+
+## Data Sources used in this demo
+
+This demo uses data from the GBFS feed provided by citi-bike.
+
+- [Citi-Bike System Data Homepage](https://www.citibikenyc.com/system-data)
+- [GBFS Feed Specification](https://github.com/NABSA/gbfs)
