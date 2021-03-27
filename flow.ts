@@ -5,15 +5,23 @@ export class DemoCitiBikeAvailableByStation implements interfaces.DemoCitiBikeAv
     fromStationInfoUpdate(
         source: collections.DemoCitiBikeStationInformation,
     ): registers.DemoCitiBikeAvailableByStation[] {
-        return [{info: source}];
+        return [source];
     }
     fromStationStatusPublish(
         source: collections.DemoCitiBikeStationStatus,
         register: registers.DemoCitiBikeAvailableByStation,
         previous: registers.DemoCitiBikeAvailableByStation,
     ): collections.DemoCitiBikeAvailableByStation[] {
-        if (register.info) {
-            return [{info: register.info, status: source}];
+        if (register != null) {
+            return [{
+                name: register.name,
+                lat: register.lat,
+                lon: register.lon,
+                capacity: register.capacity,
+                post_code: register.post_code,
+                rental_methods: register.rental_methods,
+                ...source
+            }];
         } else {
             return [];
         }

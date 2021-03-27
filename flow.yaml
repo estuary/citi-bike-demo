@@ -1,35 +1,25 @@
 collections:
+  # Station information changes relatively infrequently and is ingested from files.
   demo/citi-bike/station-information:
     schema: schemas.yaml#/$defs/station
     key: [/station_id]
   
+  # Station statuses are updated continuously in realtime
   demo/citi-bike/station-status:
     schema: schemas.yaml#/$defs/station_status
     key: [/station_id]
 
+  # Joins the information and status data to provide a useful view of 
+  # bike availability with location information
   demo/citi-bike/available-by-station:
-    projections: 
-      station_id: /status/station_id
-      name: /info/name
-      address: /info/address
-      num_bikes_available: /status/num_bikes_available
-      num_docks_available: /status/num_docks_available
-    
-    schema:
-      type: object
-      properties:
-        info: {$ref: schemas.yaml#/$defs/station}
-        status: {$ref: schemas.yaml#/$defs/station_status}
-      required: [info, status]
-    key: [/status/station_id]
+    schema: schemas.yaml#/$defs/available_by_station
+    key: [/station_id]
     derivation:
       register: 
-        initial: {}
-        schema: 
-          type: object
-          properties:
-            info: {$ref: schemas.yaml#/$defs/station}
-            status: {$ref: schemas.yaml#/$defs/station_status}
+        schema:
+          oneOf:
+            - {$ref: schemas.yaml#/$defs/station}
+            - {enum: [null]}
       
       transform: 
         fromStationInfo:
@@ -43,15 +33,14 @@ collections:
           publish: 
             lambda: typescript
           
+endpoints: 
+  demoDatabase:
+    sqlite:
+      path: demo-materialization.db
+      table: available_by_station
+
 materializations:
   - source:
       name: demo/citi-bike/available-by-station
     endpoint:
-      name: demoSqlite
-      config: 
-        table: available_by_station
-
-endpoints: 
-  demoSqlite:
-    sqlite:
-      path: demo-materialization.db
+      name: demoDatabase
