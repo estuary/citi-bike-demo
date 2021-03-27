@@ -16,10 +16,13 @@ collections:
     key: [/station_id]
     derivation:
       register: 
+        initial: {}
         schema:
-          oneOf:
-            - {$ref: schemas.yaml#/$defs/station}
-            - {enum: [null]}
+          type: object
+          properties:
+            info: {$ref: schemas.yaml#/$defs/station}
+            status: {$ref: schemas.yaml#/$defs/station_status}
+          reduce: {strategy: merge}
       
       transform: 
         fromStationInfo:
@@ -27,9 +30,13 @@ collections:
             name: demo/citi-bike/station-information
           update: 
             lambda: typescript
+          publish: 
+            lambda: typescript
         fromStationStatus:
           source:
             name: demo/citi-bike/station-status
+          update: 
+            lambda: typescript
           publish: 
             lambda: typescript
           

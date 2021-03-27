@@ -5,25 +5,43 @@ export class DemoCitiBikeAvailableByStation implements interfaces.DemoCitiBikeAv
     fromStationInfoUpdate(
         source: collections.DemoCitiBikeStationInformation,
     ): registers.DemoCitiBikeAvailableByStation[] {
-        return [source];
+        return [{info: source}];
+    }
+    fromStationInfoPublish(source: collections.DemoCitiBikeStationInformation, register: registers.DemoCitiBikeAvailableByStation, previous: registers.DemoCitiBikeAvailableByStation): collections.DemoCitiBikeAvailableByStation[] {
+        if (register.status) {
+            // The ! here are to tell the Typescript compiler to assert that these
+            // aren't null, which we know to be true.
+            return [join(register.info!, register.status!)]
+        } else {
+            return [] // Nothing to publish since we don't know the status yet
+        }
+    }
+    // Save the status in a register so it can be published when station info is updated.
+    fromStationStatusUpdate(source: collections.DemoCitiBikeStationStatus): registers.DemoCitiBikeAvailableByStation[] {
+        return [{status: source}]
     }
     fromStationStatusPublish(
         source: collections.DemoCitiBikeStationStatus,
         register: registers.DemoCitiBikeAvailableByStation,
         previous: registers.DemoCitiBikeAvailableByStation,
     ): collections.DemoCitiBikeAvailableByStation[] {
-        if (register != null) {
-            return [{
-                name: register.name,
-                lat: register.lat,
-                lon: register.lon,
-                capacity: register.capacity,
-                post_code: register.post_code,
-                rental_methods: register.rental_methods,
-                ...source
-            }];
+        if (register.info != null) {
+            return [join(register.info, source)];
         } else {
-            return [];
+            return []; // nothing to publish because we don't know the info yet
         }
+    }
+}
+
+// Combines a station info and status document into the output document.
+function join(info: collections.DemoCitiBikeStationInformation, status: collections.DemoCitiBikeStationStatus): collections.DemoCitiBikeAvailableByStation {
+    return {
+        name: info.name,
+        lat: info.lat,
+        lon: info.lon,
+        capacity: info.capacity,
+        post_code: info.post_code,
+        rental_methods: info.rental_methods,
+        ...status
     }
 }
