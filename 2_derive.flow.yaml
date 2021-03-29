@@ -1,0 +1,53 @@
+import:
+  - 1_capture.flow.yaml
+
+collections:
+  # Citi bike station attributes fused with the current stable of Bike IDs and ride statistics.
+  demo/citi-bike/stations-fused:
+    key: [/station_id]
+    schema: schemas/station-fused.schema.yaml
+    projections:
+      bikes: /stable/add
+
+    derivation:
+      transform:
+        fromStationAttributes:
+          source:
+            name: demo/citi-bike/station-attributes
+          publish:
+            lambda: typescript
+
+        ridesAndMoves:
+          shuffle:
+            key: [/begin/station_id]
+          source:
+            name: demo/citi-bike/rides-and-relocations
+          publish:
+            lambda: typescript
+
+  # Citi bike ride events, enriched with non-ride bike relocations from one station to another.
+  demo/citi-bike/rides-and-relocations:
+    key: [/bike_id, /begin/timestamp]
+    schema:
+      $ref: schemas/ride.schema.yaml
+      properties:
+        relocation: { const: true }
+
+    derivation:
+      # Use register to persist the last-arrived station for each bike.
+      register:
+        schema: schemas/ride.schema.yaml#/$defs/terminus
+        initial:
+          station_id: ""
+          timestamp: "0000-00-00 00:00:00.0"
+
+      transform:
+        fromRides:
+          source:
+            name: demo/citi-bike/rides
+          shuffle:
+            key: [/bike_id]
+          update:
+            lambda: typescript
+          publish:
+            lambda: typescript

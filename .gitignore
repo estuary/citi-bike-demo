@@ -14,3 +14,5 @@
 /tsconfig.json
 /.prettierrc.js
 /.eslintrc.js
+
+/202102-citibike-tripdata.csv.zip

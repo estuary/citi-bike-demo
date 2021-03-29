@@ -1,0 +1,148 @@
+import:
+  - 2_derive.flow.yaml
+
+tests:
+  "Expect a sequence of connected rides don't produce a relocation event":
+    - ingest:
+        collection: demo/citi-bike/rides
+        documents:
+          # Bike goes from station 1 => 2 => 3 => 4.
+          - &ride1
+            bike_id: &bike 17558
+            begin: &station1
+              station_id: "3276"
+              timestamp: "2020-09-01 09:21:12.3090"
+            end: &station2
+              station_id: "3639"
+              timestamp: "2020-09-01 13:48:12.3830"
+          - &ride2
+            bike_id: *bike
+            begin: *station2
+            end: &station3
+              station_id: "3202"
+              timestamp: "2020-09-01 14:33:35.1020"
+          - &ride3
+            bike_id: *bike
+            begin: *station3
+            end: &station4
+              station_id: "3267"
+              timestamp: "2020-09-01 16:49:30.1610"
+    - verify:
+        collection: demo/citi-bike/rides-and-relocations
+        documents: [*ride1, *ride2, *ride3]
+
+  "Expect a disconnected ride sequence produces an interleaved relocation":
+    - ingest:
+        collection: demo/citi-bike/rides
+        documents:
+          - &ride1 { bike_id: *bike, begin: *station1, end: *station2 }
+          - &ride2 { bike_id: *bike, begin: *station3, end: *station4 }
+    - verify:
+        collection: demo/citi-bike/rides-and-relocations
+        documents:
+          - *ride1
+          - {
+              bike_id: *bike,
+              begin: *station2,
+              end: *station3,
+              relocation: true,
+            }
+          - *ride2
+
+  "Expect stations update as bikes come and go":
+    - ingest:
+        collection: demo/citi-bike/rides
+        documents:
+          # Two bikes leave (from Marin & Newport) and arrive at Harborside.
+          - bike_id: &bikeA 8675
+            begin:
+              station_id: "Marin"
+              timestamp: &ts1 "2020-09-01 09:21:12.3090"
+            end:
+              station_id: "Harborside"
+              timestamp: &ts2 "2020-09-01 13:48:12.3830"
+
+          - bike_id: &bikeB 17558
+            begin:
+              station_id: "Newport"
+              timestamp: *ts1
+            end:
+              station_id: "Harborside"
+              timestamp: *ts2
+
+    - verify:
+        collection: demo/citi-bike/stations-fused
+        documents:
+          - station_id: "Harborside"
+            ride_in: 2
+            stable: { add: [*bikeA, *bikeB] }
+          - station_id: "Marin"
+            ride_out: 1
+          - station_id: "Newport"
+            ride_out: 1
+
+    - ingest:
+        collection: demo/citi-bike/rides
+        documents:
+          # Bike A rides to Marin.
+          - bike_id: *bikeA
+            begin:
+              station_id: "Harborside"
+              timestamp: &ts3 "2020-09-01 14:33:35.1020"
+            end:
+              station_id: "Marin"
+              timestamp: &ts4 "2020-09-01 16:49:30.1610"
+          # Bike B is relocated, and rides from Marin to Newport.
+          - bike_id: *bikeB
+            begin:
+              station_id: "Marin"
+              timestamp: *ts3
+            end:
+              station_id: "Newport"
+              timestamp: *ts4
+
+    - verify:
+        collection: demo/citi-bike/stations-fused
+        documents:
+          - station_id: "Harborside"
+            ride_in: 2
+            move_out: 1
+            ride_out: 1
+            stable: { add: [] }
+          - station_id: "Marin"
+            ride_in: 1
+            move_in: 1
+            ride_out: 2
+            stable: { add: [*bikeA] }
+          - station_id: "Newport"
+            ride_in: 1
+            ride_out: 1
+            stable: { add: [*bikeB] }
+
+    # Ingest some station attributes, and expect they're reflected in the fused view.
+    - ingest:
+        collection: demo/citi-bike/station-attributes
+        documents:
+          - station_id: "Harborside"
+            name: Harborside Station
+            lat: 12.34
+            lon: 56.78
+            capacity: 42
+          - station_id: "Marin"
+            name: Marin Light Rail
+          - station_id: "Newport"
+            name: Newport PATH
+
+    - verify:
+        collection: demo/citi-bike/stations-fused
+        documents:
+          - station_id: "Harborside"
+            name: Harborside Station
+            lat: 12.34
+            lon: 56.78
+            capacity: 42
+            ride_in: 2
+          - station_id: "Marin"
+            name: Marin Light Rail
+          - station_id: "Newport"
+            name: Newport PATH

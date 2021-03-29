@@ -1,6 +1,5 @@
 {
-    // Note that we don't forward any ports here, because the docker containers are running with --network=host
-
+	// Note that we don't forward any ports here, because the docker containers are running with --network=host
 	"name": "Estuary Flow",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "flow",
@@ -34,7 +33,6 @@
 				"*.flow.yaml"
 			]
 		},
-		"python.pythonPath": "/usr/bin/python3"
 	},
 	// IDs of extensions to install when the container is created.
 	"extensions": [
@@ -47,6 +45,6 @@
 		// Spell checker for documentation and catalogs.
 		"streetsidesoftware.code-spell-checker"
 	],
-    // this user matches the user that's created inside the flow image
+	// this user matches the user that's created inside the flow image
 	"remoteUser": "flow"
 }

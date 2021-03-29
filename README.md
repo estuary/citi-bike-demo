@@ -1,16 +1,44 @@
 # Flow Citi-Bike Demo
 
-This repository contains a demo project that uses Flow to process both realtime and batch data from publicly available datasets.
+This repository contains a demo project that uses Flow to fuse realtime and batch data from publicly available datasets.
 
 The Flow documentation is available at (https://docs.estuary.dev/). The docs may provide a more friendly introduction, since this repository is designed with a human narrator in mind.
 
 ## What it does
 
-This demo takes "batch" data describing bike share stations and joins it with a realtime feed of station status information to provide a continuously updated view of bike availability along with station location information. The results are materialized into a database and kept up to date in realtime.
+This demo models a dataset describing bike share stations and joins it with a feed of bike rides to provide a continuously updated view of fused station metadata, statistics, and bike availability. The results are materialized into a database and kept up to date in realtime.
 
-The batch station information is in `station_info.jsonl`. This file contains data like the name and location of each station. It is ingested into flow using `./scripts/add-station-info.sh`.
+Catalog sources are organized to be walked through as part of a demo:
 
-The realtime status data is fetched from the GBFS feed at `https://gbfs.citibikenyc.com/gbfs/en/station_status.json` and forwarded into flow continuously using `./scripts/add-station-statuses.sh`, which runs until you stop it using `ctrl-c`.
+* `1_capture.flow.yaml` - Characterizes upstream data systems and collections into which station attributes and rides are captured.
+* `2_derive.flow.yaml` - Derives a fused view of stations which includes attributes, bike statistics, and a current stable of bikes.
+* `3_materialize.flow.yaml` - Defines an endpoint and materialization for the fused stations view.
+* `4_tests.flow.yaml` - Tests the collections and derivations of this catalog.
+
+## Usage
+
+This example is meant to run as a VSCode devcontainer, with an integrated PostgreSQL database.
+
+```console
+# Run catalog tests.
+$ flowctl test --source 4_tests.flow.yaml
+
+# Start a local development session.
+$ flowctl develop --source 3_materialize.flow.yaml --port 8080
+
+# Examine the `stations_fused` table created in the integrated PostgreSQL DB.
+# See pg_query_fused_stations.sql
+
+# Load station attributes dataset. Try querying again.
+$ ./scripts/load-station-attributes.sh
+
+# Start streaming in rides. Keep querying.
+$ ./scripts/stream-rides.sh
+
+# Clean up `flowctl_develop` directory.
+# Also run `pg_reset_tables.sql` to drop created tables
+$ git clean -f -d
+```
 
 ## Data Sources used in this demo
 
