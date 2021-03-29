@@ -3,19 +3,19 @@ collections:
   demo/citi-bike/station-information:
     schema: schemas.yaml#/$defs/station
     key: [/station_id]
-  
+
   # Station statuses are updated continuously in realtime
   demo/citi-bike/station-status:
     schema: schemas.yaml#/$defs/station_status
     key: [/station_id]
 
-  # Joins the information and status data to provide a useful view of 
+  # Joins the information and status data to provide a useful view of
   # bike availability with location information
   demo/citi-bike/available-by-station:
     schema: schemas.yaml#/$defs/available_by_station
     key: [/station_id]
     derivation:
-      register: 
+      register:
         initial: {}
         schema:
           type: object
@@ -23,24 +23,24 @@ collections:
             info: {$ref: schemas.yaml#/$defs/station}
             status: {$ref: schemas.yaml#/$defs/station_status}
           reduce: {strategy: merge}
-      
-      transform: 
+
+      transform:
         fromStationInfo:
           source:
             name: demo/citi-bike/station-information
-          update: 
+          update:
             lambda: typescript
-          publish: 
+          publish:
             lambda: typescript
         fromStationStatus:
           source:
             name: demo/citi-bike/station-status
-          update: 
+          update:
             lambda: typescript
-          publish: 
+          publish:
             lambda: typescript
-          
-endpoints: 
+
+endpoints:
   demoDatabase:
     sqlite:
       path: demo-materialization.db
@@ -51,3 +51,77 @@ materializations:
       name: demo/citi-bike/available-by-station
     endpoint:
       name: demoDatabase
+
+tests:
+  'station info and status are joined':
+    - ingest:
+        collection: demo/citi-bike/station-information
+        documents:
+          - station_id: '72'
+            region_id: '71'
+            capacity: 55
+            lat: 40.76727216
+            lon: -73.99392888
+            name: 'W 52 St & 11 Ave'
+            rental_methods:
+              - CREDITCARD
+              - KEY
+    - ingest:
+        collection: demo/citi-bike/station-status
+        documents:
+          - station_id: '72'
+            num_bikes_available: 1
+            station_status: active
+            num_docks_available: 52
+    - verify:
+        collection: demo/citi-bike/available-by-station
+        documents:
+          - station_id: '72'
+            name: 'W 52 St & 11 Ave'
+            capacity: 55
+            lat: 40.76727216
+            lon: -73.99392888
+            num_bikes_available: 1
+            num_docks_available: 52
+            station_status: active
+
+    # Update the station info and verify that the derivation is updated
+    - ingest:
+        collection: demo/citi-bike/station-information
+        documents:
+          - station_id: '72'
+            name: 'totally new name'
+            capacity: 45
+            lat: 40.76727216
+            lon: -73.99392888
+    - verify:
+        collection: demo/citi-bike/available-by-station
+        documents:
+          - station_id: '72'
+            name: 'totally new name'
+            capacity: 45
+            lat: 40.76727216
+            lon: -73.99392888
+            num_bikes_available: 1
+            num_docks_available: 52
+            station_status: active
+
+    # Update the status and verify that the derivation is updated
+    - ingest:
+        collection: demo/citi-bike/station-status
+        documents:
+          - station_id: '72'
+            num_bikes_available: 5
+            num_docks_available: 47
+            station_status: active
+    - verify:
+        collection: demo/citi-bike/available-by-station
+        documents:
+          - station_id: '72'
+            name: 'totally new name'
+            capacity: 45
+            lat: 40.76727216
+            lon: -73.99392888
+            num_bikes_available: 5
+            num_docks_available: 47
+            station_status: active
