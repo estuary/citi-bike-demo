@@ -1,0 +1,59 @@
+captures:
+  examples/citi-bike/source-s3:
+    endpoint:
+      airbyteSource:
+        image: ghcr.io/estuary/source-s3:af98f09-dirty
+        config:
+          # Part of the AWS credentials that will be used to connect to S3
+          # [string] (required)
+          awsAccessKeyId: "" # We're accessing a public dataset.
+          # Part of the AWS credentials that will be used to connect to S3
+          # [string] (required)
+          awsSecretAccessKey: ""
+          # Name of the S3 bucket
+          # [string]
+          bucket: tripdata
+          # The name of the AWS region where the S3 stream is located
+          # [string]
+          region: us-east-1
+          # Prefix within the bucket to capture from.
+          # [string]
+          prefix: ""
+    bindings:
+      - resource:
+          stream: tripdata/JC-202006
+          syncMode: incremental
+        target: examples/citi-bike/rides
+
+collections:
+  examples/citi-bike/rides:
+    schema: schemas/ride.schema.yaml
+    key: [/bike_id, /begin/timestamp]
+
+    # Define projections that map CSV headers into document locations.
+    projections:
+      bikeid: /bike_id
+      birth year: /birth_year
+      end station id: /end/station/id
+      end station latitude: /end/station/geo/latitude
+      end station longitude: /end/station/geo/longitude
+      end station name: /end/station/name
+      gender: /gender
+      start station id: /begin/station/id
+      start station latitude: /begin/station/geo/latitude
+      start station longitude: /begin/station/geo/longitude
+      start station name: /begin/station/name
+      starttime: /begin/timestamp
+      stoptime: /end/timestamp
+      tripduration: /duration_seconds
+      usertype: /user_type
+
+# journalRules control how Flow collections map into Gazette journals.
+# Here, we persist to the local filesystem as a stand-in for cloud storage.
+journalRules:
+  00_fragment_store:
+    template:
+      fragment:
+        compression_codec: GZIP
+        stores: [file:///]
+        flush_interval: 5m

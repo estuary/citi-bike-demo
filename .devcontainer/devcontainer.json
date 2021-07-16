@@ -33,6 +33,7 @@
 				"*.flow.yaml"
 			]
 		},
+		"python.pythonPath": "/usr/bin/python3"
 	},
 	// IDs of extensions to install when the container is created.
 	"extensions": [
@@ -45,6 +46,7 @@
 		// Spell checker for documentation and catalogs.
 		"streetsidesoftware.code-spell-checker"
 	],
-	// this user matches the user that's created inside the flow image
-	"remoteUser": "flow"
+	// This user matches the user that's created inside the flow image
+	"remoteUser": "flow",
+	"overrideCommand": false
 }

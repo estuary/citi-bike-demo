@@ -1,0 +1,36 @@
+import:
+  - last-seen.flow.yaml
+  - stations.flow.yaml
+
+materializations:
+  examples/citi-bike/views:
+    endpoint:
+      # Materialize into a local postgres database.
+      postgres:
+        host: localhost
+        port: 5432
+        user: flow
+        password: flow
+        dbname: flow
+
+    # To try this out, create a Snowflake trial and plug in your credentials.
+    # snowflake:
+    #  account: bn92689.us-central1.gcp
+    #  database: estuary
+    #  password: THE_PASSWORD
+    #  schema: public
+    #  user: jgraettinger
+    #  warehouse: compute_wh
+    #  role: SYSADMIN
+
+    bindings:
+      - source: examples/citi-bike/stations
+        resource: { table: citi_stations }
+        fields:
+          include:
+            # JSON arrays aren't materialized by default.
+            currentBikes: {}
+          recommended: true
+
+      - source: examples/citi-bike/last-seen
+        resource: { table: citi_last_seen }
