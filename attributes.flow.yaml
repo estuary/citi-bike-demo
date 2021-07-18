@@ -1,0 +1,42 @@
+collections:
+  examples/citi-bike/attributes:
+    schema:
+      $schema: http://json-schema.org/draft-07/schema#
+      properties:
+        Capacity:
+          type: string
+        Has Kiosk:
+          type: string
+        Name:
+          type: string
+        Region:
+          type: string
+        Short Name:
+          type: string
+        Station ID:
+          type: string
+        Type:
+          type: string
+      type: object
+      required: [Station ID]
+    key: [/Station ID]
+
+captures:
+  examples/citi-bike/source-google-sheets:
+    endpoint:
+      airbyteSource:
+        image: airbyte/source-google-sheets:latest
+        config:
+          # The contents of the JSON service account key. See the <a href="https://docs.airbyte.io/integrations/sources/google-sheets">docs</a> for more information on how to generate this key.
+          # [string] (required)
+          # For this example, use any service account you like. The spreadsheet is public.
+          credentials_json: "{ Fill in with your own service account }"
+          # The ID of the spreadsheet to be replicated.
+          # [string] (required)
+          # Raw link: https://docs.google.com/spreadsheets/d/1hQLcrOitufcnYzfIsTmOfwsFlwL1rlOj0WPzjT04JDc/edit#gid=0
+          spreadsheet_id: "1hQLcrOitufcnYzfIsTmOfwsFlwL1rlOj0WPzjT04JDc"
+    bindings:
+      - resource:
+          stream: Attributes
+          syncMode: full_refresh
+        target: examples/citi-bike/attributes

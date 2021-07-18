@@ -3,6 +3,23 @@
 $ref: ride.schema.yaml#/$defs/station
 
 properties:
+
+  region:
+    description: "Region code of the station"
+    type: [integer, 'null']
+
+  capacity:
+    description: "Total number of bike slots"
+    type: [integer, 'null']
+
+  hasKiosk:
+    description: "Whether the station has a kiosk"
+    type: [boolean, 'null']
+
+  stationType:
+    description: "Type of the station"
+    type: [string, 'null']
+
   arrival:
     description: "Statistics on Bike arrivals to the station"
     properties:

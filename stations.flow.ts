@@ -35,4 +35,21 @@ export class ExamplesCitiBikeStations implements interfaces.ExamplesCitiBikeStat
             ];
         }
     }
+
+    attributesPublish(
+        source: collections.ExamplesCitiBikeAttributes,
+        _register: registers.ExamplesCitiBikeStations,
+        _previous: registers.ExamplesCitiBikeStations,
+    ): collections.ExamplesCitiBikeStations[] {
+        return [
+            {
+                id: parseInt(source['Station ID'], 10),
+                name: source.Name!,
+                hasKiosk: /true/i.test(source['Has Kiosk'] || ''),
+                capacity: parseInt(source.Capacity!, 10),
+                stationType: source.Type,
+                region: parseInt(source.Region!, 10),
+            },
+        ];
+    }
 }
